@@ -36,20 +36,20 @@ func HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(0)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		fmt.Fprint(w, err.Error())
 		return
 	}
 	linkValue := r.FormValue("link")
 	if linkValue == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("the link could not being an empty field"))
+		fmt.Fprint(w, "the link could not being an empty field")
 		return
 	}
 
 	shortenLink, err := shortener.NewShortLinker(10, "http", "localhost").Create(linkValue)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("could not short a link"))
+		fmt.Fprint(w, "could not short a link")
 		return
 	}
 	result := struct {
@@ -62,7 +62,7 @@ func HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	jsonRes, err := json.Marshal(result)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("could not make a json"))
+		fmt.Fprint(w, "could not make a json")
 		return
 	}
 
