@@ -3,8 +3,9 @@ package shortener
 import (
 	"errors"
 	"net"
+	"net/url"
+	httpdialer "taraskrasiuk/url_shortener_service/internal/httpDialer"
 	"testing"
-	"time"
 )
 
 func TestGenerateUUID(t *testing.T) {
@@ -41,14 +42,43 @@ func TestGenerateUUID(t *testing.T) {
 
 func TestFailedValidateUrlByDialRequest(t *testing.T) {
 	// change the function behavior in order to fail
-	dialReq = func(_, _ string, _ time.Duration) (net.Conn, error) {
+	dialReq = func(_ *url.URL) (net.Conn, error) {
 		return nil, errors.New("failed dial request")
 	}
 
 	url := "https://wrong-address"
 
-	err := validateUrl(url)
+	_, err := parseLink(url)
 	if err == nil {
 		t.Fatal("expected an error to be occured")
+	}
+}
+
+func TestFailedValidateUrlInvalidURI(t *testing.T) {
+	invalidUri := "invalid_uri"
+	_, err := parseLink(invalidUri)
+	if err == nil {
+		t.Fatal("expected an error to be occured")
+	}
+}
+
+func TestCreateShorterLink(t *testing.T) {
+	// Revert mocked function
+	dialReq = httpdialer.HttpDialProxy
+
+	inputLink := "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go"
+
+	s := NewShortLinker(10, "http", "localhost")
+
+	shorterLink, err := s.Create(inputLink)
+	if err != nil {
+		t.Errorf("expected to get a shorter link, but got an error: %v", err)
+	}
+	shortUrl, err := url.Parse(shorterLink)
+	if err != nil {
+		t.Errorf("expected to parse a shorter link, but got an error: %v", err)
+	}
+	if shortUrl.Scheme != "http" || shortUrl.Host != "localhost" {
+		t.Error("shorter link does not have a provided scheme and host from env")
 	}
 }

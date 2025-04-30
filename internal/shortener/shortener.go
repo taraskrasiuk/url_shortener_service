@@ -5,9 +5,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"net"
-	u "net/url"
-	"time"
+	"net/url"
+	httpdialer "taraskrasiuk/url_shortener_service/internal/httpDialer"
 )
 
 var maxLen = 12
@@ -16,27 +15,26 @@ var maxLen = 12
 // 1. Check len of url
 // 2. Check the url consintent and can be parsed
 // 3. Make a dial request
+var dialReq = httpdialer.HttpDialProxy
 
-var dialReq = net.DialTimeout
-
-func validateUrl(url string) error {
-	if url == "" {
-		return errors.New("url could not being empty")
+func parseLink(link string) (*url.URL, error) {
+	if link == "" {
+		return nil, errors.New("url could not being empty")
 	}
-	u, err := u.ParseRequestURI(url)
+	u, err := url.Parse(link)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	reqDeadline := 500 * time.Millisecond
-	conn, err := dialReq("tcp", u.RawPath, reqDeadline)
+
+	conn, err := dialReq(u)
 	// check for a nil, just for testing purposes
 	if conn != nil {
 		defer conn.Close()
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return u, nil
 }
 
 func generateUUID(length int) (string, error) {
@@ -61,22 +59,25 @@ func generateUUID(length int) (string, error) {
 }
 
 type ShortLinker struct {
-	l int
+	scheme string
+	host   string
+	len    int
 }
 
-func NewShortLinker(length int) *ShortLinker {
-	return &ShortLinker{length}
+func NewShortLinker(length int, scheme, host string) *ShortLinker {
+	return &ShortLinker{scheme, host, length}
 }
 
-func (s *ShortLinker) Create(url string) (string, error) {
-	err := validateUrl(url)
+func (s *ShortLinker) Create(link string) (string, error) {
+	_, err := parseLink(link)
 	if err != nil {
 		return "", err
 	}
 
-	id, err := generateUUID(s.l)
+	id, err := generateUUID(s.len)
 	if err != nil {
 		return "", err
 	}
-	return id, nil
+	shorterLink := fmt.Sprintf("%s://%s/%s", s.scheme, s.host, id)
+	return shorterLink, nil
 }
