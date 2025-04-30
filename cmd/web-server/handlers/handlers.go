@@ -31,7 +31,7 @@ func ReqInfoMiddleware(next http.Handler) http.HandlerFunc {
 // POST Handler for creating a shorter link.
 // Handler epxects a data in format "multipart/form-data"
 // and requirs the filed "link" to exists.
-func HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
+func HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	// parse form data
 	err := r.ParseMultipartForm(0)
 	if err != nil {

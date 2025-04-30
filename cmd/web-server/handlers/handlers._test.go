@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestSuccessHandleCreateShortLink(t *testing.T) {
+func TestSuccessHandlerCreateShortLink(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	writer := multipart.NewWriter(buf)
@@ -23,7 +23,7 @@ func TestSuccessHandleCreateShortLink(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	// run handler
-	HandleCreateShortLink(w, req)
+	HandlerCreateShortLink(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
@@ -42,5 +42,54 @@ func TestSuccessHandleCreateShortLink(t *testing.T) {
 	}
 	if err := json.Unmarshal(data, respContent); err != nil {
 		t.Fatalf("could not unmarshal the response data %v", err)
+	}
+}
+
+func TestFailHandlerCreateShortLink(t *testing.T) {
+	tests := []struct {
+		body        [2]string
+		contetnType string
+	}{
+		{
+			body:        [2]string{"incorrect_field_name", "https://google.com"}, // incorrect field name
+			contetnType: "multipart/form-data",
+		},
+		{
+
+			body:        [2]string{"link", ""}, // missed link
+			contetnType: "multipart/form-data",
+		},
+		{
+
+			body:        [2]string{"link", "https://google.com"},
+			contetnType: "application/json", // incorrect content type
+		},
+	}
+
+	for _, test := range tests {
+		buf := &bytes.Buffer{}
+
+		writer := multipart.NewWriter(buf)
+		writer.WriteField(test.body[0], test.body[1])
+		// close the writer
+		writer.Close()
+
+		req := httptest.NewRequest(http.MethodPost, "/shorten", buf)
+		req.Header.Set("Content-Type", test.contetnType)
+
+		w := httptest.NewRecorder()
+		// run handler
+		HandlerCreateShortLink(w, req)
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		type response struct {
+			ShortenLink string `json:"shortenLink"`
+		}
+
+		if res.StatusCode != http.StatusBadRequest {
+			t.Fatalf("expected status code to be 400 but got %d", res.StatusCode)
+		}
 	}
 }

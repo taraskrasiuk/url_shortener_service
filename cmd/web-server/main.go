@@ -14,7 +14,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /shorten", handlers.HandleCreateShortLink)
+	mux.HandleFunc("POST /shorten", handlers.HandlerCreateShortLink)
 
 	// register middlewares
 	handler := handlers.ReqInfoMiddleware(mux)
