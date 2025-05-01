@@ -44,7 +44,7 @@ func TestFileStorageConcurrency(t *testing.T) {
 	testFileName := "mock_test.db"
 	st := NewFileStorage(testFileName)
 	defer func() {
-		err := os.Remove(testFileName)
+		err := st.Drop()
 		if err != nil {
 			t.Fatal(err)
 		}

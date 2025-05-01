@@ -5,6 +5,6 @@ build:
 run: build
 	./$(BIN_PATH)
 test:
-	go test ./...
+	go test --race ./...
 web-server-run:
 	go run ./cmd/web-server/

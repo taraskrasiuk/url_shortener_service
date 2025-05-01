@@ -35,6 +35,7 @@ func NewFileStorage(filePath string) *FileStorage {
 	return fileStorage
 }
 
+// Read the file and fill the values map in instance.
 func (s *FileStorage) readFileStorage() error {
 	for {
 		data, _, err := bufio.NewReader(s.f).ReadLine()
@@ -84,4 +85,10 @@ func (s *FileStorage) Get(key string) (string, error) {
 	defer s.mu.Unlock()
 
 	return s.values[key], nil
+}
+
+func (s *FileStorage) Drop() error {
+	defer os.Remove(s.f.Name())
+	defer s.f.Close()
+	return nil
 }

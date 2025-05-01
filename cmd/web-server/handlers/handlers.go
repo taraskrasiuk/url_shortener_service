@@ -4,12 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"taraskrasiuk/url_shortener_service/internal/shortener"
+	"taraskrasiuk/url_shortener_service/internal/storage"
 	"time"
 )
 
+type UrlShortenerHandler struct {
+	storage storage.Storage
+}
+
+func NewUrlShortenerHandler(s storage.Storage) *UrlShortenerHandler {
+	return &UrlShortenerHandler{s}
+}
+
 // Middleware for logging request.
 // It should display, time, method, url and content type
+//
+// TODO: move to another file
 func ReqInfoMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -31,7 +43,7 @@ func ReqInfoMiddleware(next http.Handler) http.HandlerFunc {
 // POST Handler for creating a shorter link.
 // Handler epxects a data in format "multipart/form-data"
 // and requirs the filed "link" to exists.
-func HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
+func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	// parse form data
 	err := r.ParseMultipartForm(0)
 	if err != nil {
@@ -39,6 +51,7 @@ func HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, err.Error())
 		return
 	}
+	// get a value from a form data, and check it
 	linkValue := r.FormValue("link")
 	if linkValue == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -46,12 +59,21 @@ func HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create a short version of the link
 	shortenLink, err := shortener.NewShortLinker(10, "http", "localhost").Create(linkValue)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "could not short a link")
 		return
 	}
+	// save the short and original version to storage
+	err = h.storage.Write(shortenLink, linkValue)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "could not save to storage")
+		return
+	}
+
 	result := struct {
 		ShortenLink string `json:"shortenLink"`
 	}{
@@ -69,4 +91,31 @@ func HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonRes)
+}
+
+// Handler which going to count and gather the information
+// and then redirect user to original url.
+func (h *UrlShortenerHandler) HandleShortLink(w http.ResponseWriter, r *http.Request) {
+	shortId := r.PathValue("shortenID")
+	defer r.Body.Close()
+	fmt.Println("shortenID : " + shortId)
+	// validate a shortenID
+	if strings.TrimSpace(shortId) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "short id is missed")
+		return
+	}
+	origLink, err := h.storage.Get(shortId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if origLink == "" {
+			fmt.Fprint(w, "the short link does not exist")
+		} else {
+			fmt.Fprint(w, "could not find a link")
+		}
+		return
+	}
+
+	// redirect user to original link
+	http.Redirect(w, r, origLink, http.StatusPermanentRedirect)
 }

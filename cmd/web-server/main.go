@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"taraskrasiuk/url_shortener_service/cmd/web-server/handlers"
+	"taraskrasiuk/url_shortener_service/internal/storage"
 )
 
 func main() {
@@ -14,7 +15,12 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /shorten", handlers.HandlerCreateShortLink)
+	var appStorage storage.Storage
+	appStorage = storage.NewFileStorage("url_storage.db")
+	urlShortenerHandler := handlers.NewUrlShortenerHandler(appStorage)
+
+	mux.HandleFunc("POST /shorten", urlShortenerHandler.HandlerCreateShortLink)
+	mux.HandleFunc("GET /{shortenID}", urlShortenerHandler.HandleShortLink)
 
 	// register middlewares
 	handler := handlers.ReqInfoMiddleware(mux)
