@@ -17,6 +17,8 @@ type FileStorage struct {
 	mu     sync.Mutex
 }
 
+// Create file storage function which returns an instance of FileStorage.
+// If file for a storage does not exists, it will create it.
 func NewFileStorage(filePath string) *FileStorage {
 	f, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
