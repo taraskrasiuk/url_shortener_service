@@ -4,18 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"taraskrasiuk/url_shortener_service/internal/shortener"
-	"taraskrasiuk/url_shortener_service/internal/storage"
 	"time"
 )
 
-type UrlShortenerHandler struct {
-	storage storage.Storage
+type dbStorage interface {
+	Write(k, v string) error
+	Get(k string) (string, error)
+	Drop() error
 }
 
-func NewUrlShortenerHandler(s storage.Storage) *UrlShortenerHandler {
-	return &UrlShortenerHandler{s}
+type config interface {
+	GetScheme() string
+	GetHost() string
+}
+
+type UrlShortenerHandler struct {
+	storage dbStorage
+	config  config
+}
+
+func NewUrlShortenerHandler(s dbStorage, c config) *UrlShortenerHandler {
+	return &UrlShortenerHandler{s, c}
 }
 
 // Middleware for logging request.
@@ -60,14 +72,14 @@ func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *h
 	}
 
 	// create a short version of the link
-	shortenLink, err := shortener.NewShortLinker(10, "http", "localhost").Create(linkValue)
+	shortenID, err := shortener.NewShortLinker(10).Create(linkValue)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "could not short a link")
 		return
 	}
 	// save the short and original version to storage
-	err = h.storage.Write(shortenLink, linkValue)
+	err = h.storage.Write(shortenID, linkValue)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "could not save to storage")
@@ -77,7 +89,7 @@ func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *h
 	result := struct {
 		ShortenLink string `json:"shortenLink"`
 	}{
-		shortenLink,
+		ShortenLink: fmt.Sprintf("%s://%s/%s", os.Getenv("scheme"), os.Getenv("host"), shortenID),
 	}
 	defer r.Body.Close()
 
@@ -98,7 +110,6 @@ func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *h
 func (h *UrlShortenerHandler) HandleShortLink(w http.ResponseWriter, r *http.Request) {
 	shortId := r.PathValue("shortenID")
 	defer r.Body.Close()
-	fmt.Println("shortenID : " + shortId)
 	// validate a shortenID
 	if strings.TrimSpace(shortId) == "" {
 		w.WriteHeader(http.StatusBadRequest)

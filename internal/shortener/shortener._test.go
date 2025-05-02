@@ -68,17 +68,10 @@ func TestCreateShorterLink(t *testing.T) {
 
 	inputLink := "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go"
 
-	s := NewShortLinker(10, "http", "localhost")
+	s := NewShortLinker(10)
 
-	shorterLink, err := s.Create(inputLink)
+	_, err := s.Create(inputLink)
 	if err != nil {
 		t.Errorf("expected to get a shorter link, but got an error: %v", err)
-	}
-	shortUrl, err := url.Parse(shorterLink)
-	if err != nil {
-		t.Errorf("expected to parse a shorter link, but got an error: %v", err)
-	}
-	if shortUrl.Scheme != "http" || shortUrl.Host != "localhost" {
-		t.Error("shorter link does not have a provided scheme and host from env")
 	}
 }

@@ -10,7 +10,7 @@ import (
 
 func main() {
 	flag.Parse()
-	shortUrl, err := shortener.NewShortLinker(10, "http", "localhost").Create(flag.Arg(0))
+	shortUrl, err := shortener.NewShortLinker(10).Create(flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}

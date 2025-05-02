@@ -59,13 +59,11 @@ func generateUUID(length int) (string, error) {
 }
 
 type ShortLinker struct {
-	scheme string
-	host   string
-	len    int
+	len int
 }
 
-func NewShortLinker(length int, scheme, host string) *ShortLinker {
-	return &ShortLinker{scheme, host, length}
+func NewShortLinker(length int) *ShortLinker {
+	return &ShortLinker{length}
 }
 
 func (s *ShortLinker) Create(link string) (string, error) {
@@ -78,6 +76,5 @@ func (s *ShortLinker) Create(link string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	shorterLink := fmt.Sprintf("%s://%s/%s", s.scheme, s.host, id)
-	return shorterLink, nil
+	return id, nil
 }

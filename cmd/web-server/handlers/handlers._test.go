@@ -7,9 +7,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	appconfig "taraskrasiuk/url_shortener_service/cmd/web-server/app_config"
 	"taraskrasiuk/url_shortener_service/internal/storage"
 	"testing"
 )
+
+var cfg = appconfig.NewConfig()
 
 func TestSuccessHandlerCreateShortLink(t *testing.T) {
 	st := storage.NewFileStorage("test.db")
@@ -27,7 +30,7 @@ func TestSuccessHandlerCreateShortLink(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	// run handler
-	handler := NewUrlShortenerHandler(st)
+	handler := NewUrlShortenerHandler(st, cfg)
 	handler.HandlerCreateShortLink(w, req)
 
 	res := w.Result()
@@ -45,8 +48,13 @@ func TestSuccessHandlerCreateShortLink(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not read bytes from the response body")
 	}
+	// The response should containe a json
 	if err := json.Unmarshal(data, respContent); err != nil {
 		t.Fatalf("could not unmarshal the response data %v", err)
+	} else {
+		if respContent.ShortenLink == "" {
+			t.Fatalf("expected a short id to be not empty")
+		}
 	}
 }
 
@@ -87,7 +95,7 @@ func TestFailHandlerCreateShortLink(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		// run handler
-		handler := NewUrlShortenerHandler(st)
+		handler := NewUrlShortenerHandler(st, cfg)
 		handler.HandlerCreateShortLink(w, req)
 
 		res := w.Result()
@@ -100,6 +108,20 @@ func TestFailHandlerCreateShortLink(t *testing.T) {
 		if res.StatusCode != http.StatusBadRequest {
 			t.Fatalf("expected status code to be 400 but got %d", res.StatusCode)
 		}
+
+		// var resData response
+		// b, err := io.ReadAll(res.Body)
+		// t.Log("qwe ::" + string(b))
+		// if err != nil {
+		// 	t.Fatalf("could not read response %v", err)
+		// }
+		// err = json.Unmarshal(b, &resData)
+		// if err != nil {
+		// 	t.Fatalf("could not unmarshal response bytes %v", err)
+		// }
+		// if resData.ShortenLink != fmt.Sprint("qwe") {
+		// 	t.Fatalf("expect shorten link to be: %s but got %s", "1", "2")
+		// }
 	}
 }
 
@@ -120,7 +142,7 @@ func TestHandleShortLink(t *testing.T) {
 	req.SetPathValue("shortenID", shortLink)
 	w := httptest.NewRecorder()
 
-	handler := NewUrlShortenerHandler(st)
+	handler := NewUrlShortenerHandler(st, cfg)
 	handler.HandleShortLink(w, req)
 
 	res := w.Result()
