@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"taraskrasiuk/url_shortener_service/internal/shortener"
 	"time"
@@ -89,7 +88,7 @@ func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *h
 	result := struct {
 		ShortenLink string `json:"shortenLink"`
 	}{
-		ShortenLink: fmt.Sprintf("%s://%s/%s", os.Getenv("scheme"), os.Getenv("host"), shortenID),
+		ShortenLink: fmt.Sprintf("%s://%s/%s", h.config.GetScheme(), h.config.GetHost(), shortenID),
 	}
 	defer r.Body.Close()
 
