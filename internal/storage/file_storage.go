@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -37,20 +36,18 @@ func NewFileStorage(filePath string) *FileStorage {
 
 // Read the file and fill the values map in instance.
 func (s *FileStorage) readFileStorage() error {
-	for {
-		data, _, err := bufio.NewReader(s.f).ReadLine()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
+	scanner := bufio.NewScanner(s.f)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
 		var (
-			row = strings.Split(string(data), "=")
+			row = strings.Split(string(scanner.Text()), "=")
 			k   = row[0]
 			v   = row[1]
 		)
 		s.values[k] = v
+	}
+	if scanner.Err() != nil {
+		return scanner.Err()
 	}
 	return nil
 }

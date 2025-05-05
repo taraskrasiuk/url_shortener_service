@@ -75,3 +75,39 @@ func TestFileStorageConcurrency(t *testing.T) {
 		}
 	}
 }
+
+func TestFileStoragePersistence(t *testing.T) {
+	mockedTestData := map[string]string{
+		"295sMlugpK": "https//www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go",
+		"5r3-FbHcYD": "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go",
+		"pNopWqvEs5": "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go",
+		"w1GN_QzF-8": "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go",
+	}
+	testFileName := "mock_test.db"
+
+	f, _ := os.OpenFile(testFileName, os.O_CREATE|os.O_WRONLY, 0644)
+	for k, v := range mockedTestData {
+		f.WriteString(k + "=" + v + "\n")
+	}
+	f.Close()
+
+	st := NewFileStorage(testFileName)
+	defer func() {
+		err := os.Remove(testFileName)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	for k, v := range mockedTestData {
+		t.Run("the storage should return a value by a key", func(t *testing.T) {
+			foundValue, err := st.Get(k)
+			if err != nil {
+				t.Fatalf("expected no error but got %v", err)
+			}
+			if foundValue != v {
+				t.Fatalf("expected a returned value for a key %s to be %s ,but got %s", k, v, foundValue)
+			}
+		})
+	}
+}
