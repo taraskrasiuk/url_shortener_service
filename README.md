@@ -22,13 +22,4 @@ Track and display click counts.
 ### Tools/Libraries:
 
 - net/http
-- boltDB
-
----
-TODO:
-- CLI app based on flgs, v1
-  Example:
-    ```
-      ./app https://uri?data1=123&data2=456
-      https://uri/123qweasdzxc
-    ```
+- local storage
