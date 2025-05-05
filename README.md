@@ -23,3 +23,9 @@ Track and display click counts.
 
 - net/http
 - local storage
+
+### TODO:
+
+- [] mux server with 2 endpoints ( POST /shorten, GET /:shortenCode)
+- [] provide a simple openapi document
+- [] provide a simple web page

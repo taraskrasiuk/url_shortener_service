@@ -8,6 +8,7 @@ import (
 	"os"
 	appconfig "taraskrasiuk/url_shortener_service/cmd/web-server/envConfig"
 	"taraskrasiuk/url_shortener_service/cmd/web-server/handlers"
+	"taraskrasiuk/url_shortener_service/cmd/web-server/middlewares"
 	"taraskrasiuk/url_shortener_service/internal/storage"
 )
 
@@ -22,11 +23,12 @@ func main() {
 
 	// register middlewares
 	handler := handlers.ReqInfoMiddleware(mux)
-	// handler = middlewares.ReqRateLimit(mux)
+	withRPSLimiter := middlewares.NewRateLimiterMiddleware(handler, 100)
+	
 	addr := fmt.Sprintf("%s:%s", os.Getenv("HOST"), os.Getenv("PORT"))
 
 	fmt.Println("Server is running: " + addr)
-	if err := http.ListenAndServe(addr, handler); err != nil && errors.Is(err, http.ErrServerClosed) {
+	if err := http.ListenAndServe(addr, withRPSLimiter); err != nil && errors.Is(err, http.ErrServerClosed) {
 		log.Fatal(err)
 	}
 }

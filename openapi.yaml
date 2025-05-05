@@ -1,0 +1,66 @@
+openapi: 3.1.0
+info:
+  title: Swagger Petstore - OpenAPI 3.0
+  version: 0.0.1
+servers:
+  - url: localhost:8080
+tags:
+  - name: shorten_url
+    description: Shorten URL
+paths:
+  /shorten:
+    post:
+      tags:
+        - shorten url
+      summary: Create a shorten url
+      operationId: CraeteShortLink
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                link:
+                  type: string
+                  description: The valid url
+              required:
+                - link
+      responses:
+        200:
+          description: The shorten version for url
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shortenLink:
+                    type: string
+                required:
+                  - shortenLink
+  /{shortenID}:
+    get:
+      tags:
+        - shorten_url
+      summary: Get the original link
+      parameters:
+        - in: path
+          name: shortenID
+          schema:
+            type: string
+          required: true
+          description: The short id, which will be used for getting the original url.
+      responses:
+        "200":
+          description: The original link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  originalUrl:
+                    type: string
+                required:
+                  - originalUrl
+        "404":
+          description: Not found by shorten id.
