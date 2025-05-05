@@ -47,7 +47,7 @@ func main() {
 
 	// register middlewares
 	handler := handlers.ReqInfoMiddleware(mux)
-
+	// handler = middlewares.ReqRateLimit(mux)
 	addr := fmt.Sprintf("%s:%s", host, port)
 
 	fmt.Println("Server is running: " + addr)
