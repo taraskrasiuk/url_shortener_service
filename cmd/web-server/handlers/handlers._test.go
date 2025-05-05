@@ -7,12 +7,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	appconfig "taraskrasiuk/url_shortener_service/cmd/web-server/app_config"
+	appconfig "taraskrasiuk/url_shortener_service/cmd/web-server/envConfig"
 	"taraskrasiuk/url_shortener_service/internal/storage"
 	"testing"
 )
 
-var cfg = appconfig.NewConfig()
+var cfg = appconfig.NewEnvConfig()
 
 func TestSuccessHandlerCreateShortLink(t *testing.T) {
 	st := storage.NewFileStorage("test.db")

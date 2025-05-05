@@ -6,29 +6,29 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type AppConfig struct {
+type EnvConfig struct {
 	scheme string
 	host   string
 }
 
-func NewConfig() *AppConfig {
+func NewEnvConfig() *EnvConfig {
 	godotenv.Load()
 
-	scheme := os.Getenv("scheme")
+	scheme := os.Getenv("R_SCHEME")
 	if scheme == "" {
 		scheme = "http"
 	}
-	host := os.Getenv("host")
+	host := os.Getenv("R_HOST")
 	if host == "" {
 		host = "localhost"
 	}
-	return &AppConfig{scheme, host}
+	return &EnvConfig{scheme, host}
 }
 
-func (c *AppConfig) GetScheme() string {
+func (c *EnvConfig) GetScheme() string {
 	return c.scheme
 }
 
-func (c *AppConfig) GetHost() string {
+func (c *EnvConfig) GetHost() string {
 	return c.host
 }
