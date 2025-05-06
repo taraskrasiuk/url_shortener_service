@@ -26,6 +26,5 @@ Track and display click counts.
 
 ### TODO:
 
-- [] mux server with 2 endpoints ( POST /shorten, GET /:shortenCode)
-- [] provide a simple openapi document
-- [] provide a simple web page
+- [x] mux server with 2 endpoints ( POST /shorten, GET /:shortenCode)
+- [x] provide a simple openapi document
