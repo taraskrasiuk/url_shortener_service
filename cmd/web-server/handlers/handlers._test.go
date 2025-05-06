@@ -3,8 +3,8 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	appconfig "taraskrasiuk/url_shortener_service/cmd/web-server/envConfig"
@@ -18,15 +18,10 @@ func TestSuccessHandlerCreateShortLink(t *testing.T) {
 	st := storage.NewFileStorage("test.db")
 	defer st.Drop()
 
-	buf := &bytes.Buffer{}
-
-	writer := multipart.NewWriter(buf)
-	writer.WriteField("link", "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go")
-	// close the writer
-	writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/shorten", buf)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
+	testLink := "https://www.digitalocean.com/community/tutorials/how-to-use-the-flag-package-in-go"
+	url := fmt.Sprintf("/shorten?link=%s", testLink)
+	req := httptest.NewRequest(http.MethodPost, url, nil)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
 	// run handler
@@ -60,21 +55,17 @@ func TestSuccessHandlerCreateShortLink(t *testing.T) {
 
 func TestFailHandlerCreateShortLink(t *testing.T) {
 	tests := []struct {
-		body        [2]string
+		link        string
 		contetnType string
 	}{
 		{
-			body:        [2]string{"incorrect_field_name", "https://google.com"}, // incorrect field name
-			contetnType: "multipart/form-data",
+
+			link:        "", // missed link
+			contetnType: "application/x-www-form-urlencoded",
 		},
 		{
 
-			body:        [2]string{"link", ""}, // missed link
-			contetnType: "multipart/form-data",
-		},
-		{
-
-			body:        [2]string{"link", "https://google.com"},
+			link:        "https://google.com",
 			contetnType: "application/json", // incorrect content type
 		},
 	}
@@ -85,12 +76,7 @@ func TestFailHandlerCreateShortLink(t *testing.T) {
 	for _, test := range tests {
 		buf := &bytes.Buffer{}
 
-		writer := multipart.NewWriter(buf)
-		writer.WriteField(test.body[0], test.body[1])
-		// close the writer
-		writer.Close()
-
-		req := httptest.NewRequest(http.MethodPost, "/shorten", buf)
+		req := httptest.NewRequest(http.MethodPost, "/shorten"+"?link="+test.link, buf)
 		req.Header.Set("Content-Type", test.contetnType)
 
 		w := httptest.NewRecorder()
@@ -105,23 +91,9 @@ func TestFailHandlerCreateShortLink(t *testing.T) {
 			ShortenLink string `json:"shortenLink"`
 		}
 
-		if res.StatusCode != http.StatusBadRequest {
-			t.Fatalf("expected status code to be 400 but got %d", res.StatusCode)
+		if res.StatusCode != http.StatusUnprocessableEntity {
+			t.Fatalf("expected status code to be 422 but got %d", res.StatusCode)
 		}
-
-		// var resData response
-		// b, err := io.ReadAll(res.Body)
-		// t.Log("qwe ::" + string(b))
-		// if err != nil {
-		// 	t.Fatalf("could not read response %v", err)
-		// }
-		// err = json.Unmarshal(b, &resData)
-		// if err != nil {
-		// 	t.Fatalf("could not unmarshal response bytes %v", err)
-		// }
-		// if resData.ShortenLink != fmt.Sprint("qwe") {
-		// 	t.Fatalf("expect shorten link to be: %s but got %s", "1", "2")
-		// }
 	}
 }
 

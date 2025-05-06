@@ -29,7 +29,6 @@ COPY --from=build /app/wb /web-server
 RUN mkdir /f_storage
 RUN chown -R 755 /f_storage
 ENV R_SCHEME="http"
-ENV R_HOST="localhost"
 ENV HOST="0.0.0.0"
 ENV PORT="8080"
 ENV STORAGE_FILE_PATH="f_storage/url-shortener.db"

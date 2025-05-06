@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"taraskrasiuk/url_shortener_service/internal/shortener"
-	"time"
 )
 
 type dbStorage interface {
@@ -29,43 +28,25 @@ func NewUrlShortenerHandler(s dbStorage, c config) *UrlShortenerHandler {
 	return &UrlShortenerHandler{s, c}
 }
 
-// Middleware for logging request.
-// It should display, time, method, url and content type
-//
-// TODO: move to another file
-func ReqInfoMiddleware(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		logTime := start.Format(time.RFC822)
-		contentType := r.Header.Get("Content-Type")
-		if contentType == "" {
-			contentType = r.Header.Get("content-type")
-		}
-		// server request
-		next.ServeHTTP(w, r)
-
-		logMsg := fmt.Sprintf("[LOG]: %s %s Content-Type: %s \t %s [%s]", r.Method, r.URL.Path, contentType, logTime, time.Since(start))
-		fmt.Println(logMsg)
-
-		return
-	}
-}
-
-// POST Handler for creating a shorter link.
 // Handler epxects a data in format "multipart/form-data"
 // and requirs the filed "link" to exists.
 func (h *UrlShortenerHandler) HandlerCreateShortLink(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		fmt.Fprint(w, "incorrect content type")
+		return
+	}
 	// parse form data
-	err := r.ParseMultipartForm(0)
+	err := r.ParseForm()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		fmt.Fprint(w, err.Error())
 		return
 	}
 	// get a value from a form data, and check it
-	linkValue := r.FormValue("link")
+	linkValue := r.URL.Query().Get("link")
 	if linkValue == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnprocessableEntity)
 		fmt.Fprint(w, "the link could not being an empty field")
 		return
 	}

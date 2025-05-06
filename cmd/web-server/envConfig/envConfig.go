@@ -18,7 +18,7 @@ func NewEnvConfig() *EnvConfig {
 	if scheme == "" {
 		scheme = "http"
 	}
-	host := os.Getenv("R_HOST")
+	host := os.Getenv("HOST")
 	if host == "" {
 		host = "localhost"
 	}

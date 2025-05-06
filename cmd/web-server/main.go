@@ -16,15 +16,16 @@ func main() {
 	mux := http.NewServeMux()
 	var cfg = appconfig.NewEnvConfig()
 	var appStorage = storage.NewFileStorage(os.Getenv("STORAGE_FILE_PATH"))
+
 	urlShortenerHandler := handlers.NewUrlShortenerHandler(appStorage, cfg)
 
 	mux.HandleFunc("POST /shorten", urlShortenerHandler.HandlerCreateShortLink)
 	mux.HandleFunc("GET /{shortenID}", urlShortenerHandler.HandleShortLink)
 
 	// register middlewares
-	handler := handlers.ReqInfoMiddleware(mux)
+	handler := middlewares.NewLoggerMiddleware(mux, os.Stdout)
 	withRPSLimiter := middlewares.NewRateLimiterMiddleware(handler, 100)
-	
+
 	addr := fmt.Sprintf("%s:%s", os.Getenv("HOST"), os.Getenv("PORT"))
 
 	fmt.Println("Server is running: " + addr)

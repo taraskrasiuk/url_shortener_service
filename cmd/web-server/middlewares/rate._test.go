@@ -8,7 +8,7 @@ import (
 func TestRateRPS(t *testing.T) {
 	st := time.Now()
 	rps := NewRPSLimiter(3)
-	t.Run("first", func(t *testing.T) {
+	t.Run("rps first chunk in parallel", func(t *testing.T) {
 		data := []struct {
 			t    time.Time
 			want bool
@@ -38,7 +38,7 @@ func TestRateRPS(t *testing.T) {
 			}
 		}
 	})
-	t.Run("parallel run", func(t *testing.T) {
+	t.Run("run mocked requests to test rps 2", func(t *testing.T) {
 		time.Sleep(1200 * time.Millisecond)
 
 		st = time.Now()
